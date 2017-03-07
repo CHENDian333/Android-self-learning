@@ -31,6 +31,7 @@ flask编写的python文件为getAPI.py，MyDatabase.py文件为连接MySQL数据
 将写好的flask的python文件上传至ubuntu下新建的文件夹中。
 
 可以用以下的命令直接运行写好的api，并从浏览器端查看
+
 （ 要把aws上的security改成all traffic，代码里host设为0.0.0.0，为了让别的ip地址可以访问该端口 ）
 
 ```
@@ -41,7 +42,21 @@ $ python getAPI.py
 
 安装nginx，gunicorn，supervisor
 
-首先是一个配置文件，写在 `/etc/supervisor/conf.d` 路径下面创建 `app.conf` 文件：
+生成默认配置文件
+
+```
+echo_supervisord_conf > supervisord.conf
+```
+
+创建遇到permission denied
+
+```
+sudo su - root -c "echo_supervisord_conf > /etc/supervisord.conf"
+```
+
+有两种方法加载新的配置：
+
+我的配置文件
 
 ```
 [program:iems5722]
@@ -54,9 +69,20 @@ stdout_logfile = /home/ubuntu/appFlask/app.log
 redirect_stderr = true
 ```
 
-接着重新加载配置文件
+1、直接在supervisord.conf最后加上上述配置信息
 
 ```
+sudo vim /etc/supervisord.conf
+```
+
+2、在 `/etc/supervisor/conf.d` 路径下面创建 `app.conf` 文件包含上述配置信息，因为一旦管理的进程过多，就很麻烦。
+
+所以一般都会 新建一个目录来专门放置进程的配置文件，然后通过 include 的方式来获取这些配置信息
+
+接着用配置好的.conf文件重新启动supervisor，并加载配置文件
+
+```
+$ supervisord -c /etc/supervisord.conf 	# 启动supervisor
 $ superviosrctl reload      # 重新加载配置文件
 $ superviosrctl update
 ```
@@ -77,11 +103,6 @@ $ superviosrctl stop xxx
 $ superviosrctl status xxx
 $ superviosrctl help        # 查看更多命令
 ```
-
-如何 log 错误信息看这里：
-
-- [Error Logging in Nginx+Gunicorn+Supervisor+Django - Stack Overflow](http://stackoverflow.com/questions/19076619/error-logging-in-nginxgunicornsupervisordjango)
-- [python - Logging in Flask on Gunicorn and Supervisor - Stack Overflow](http://stackoverflow.com/questions/28677685/logging-in-flask-on-gunicorn-and-supervisor)  
 
 `supervisord` 似乎默认是启动的，可以 `ps -aux | grep supervisord` 检测一下。
 
@@ -132,7 +153,7 @@ sudo kill xxxx
 
 参考：
 
-- Ghost 的配置教程 [Basic nginx config](http://support.ghost.org/basic-nginx-config/)
+- supervisor 的配置教程 [Basic nginx config](http://liuzxc.github.io/blog/supervisor/)
 - [Deploying Gunicorn](http://docs.gunicorn.org/en/19.3/deploy.html#nginx-configuration)，比较复杂的 Gunicorn 文档中的 Nginx 的配置方法
 - 使用 `nginx -t` 来检测配置文件是否正确：[nginx configtest vs nginx -t - DEVGET.NET](http://devget.net/nginxapache/nginx-configtest-vs-nginx-t/)
 
