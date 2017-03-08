@@ -24,7 +24,7 @@ def get_messages():
 	chatroom_id = request.args.get("chatroom_id", 0, type=int) 
 	page = request.args.get("page", 1, type=int)
 
-	query = "SELECT * FROM messages WHERE chatroom_id = %s ORDER BY  id desc"
+	query = "SELECT chatroom_id,user_id,name,message,timestamp FROM messages WHERE chatroom_id = %s ORDER BY  id desc"
 	params = (chatroom_id)
 	mydb.cursor.execute(query,params)
 
@@ -45,10 +45,7 @@ def get_messages():
 			count_msg = count - (total_page-1)*10
 		else:
 			count_msg+=1
-	# print "num of msg",count
-	# print "num of msg in 1 page",count_msg
-	# print "total page",total_page
-	# Set each page show 5 messages
+	
 	chat_message = []
 	if page == total_page:
 		for j in range(count_msg):
@@ -56,7 +53,6 @@ def get_messages():
 	elif page < total_page:
 		for i in range(10):
 			chat_message.append(message_list[(page-1)*10+i])
-	# print "msg content",chat_message
 		
 	return jsonify(status="OK",total_pages=total_page,page = page,data=chat_message)
 
@@ -68,7 +64,7 @@ def send_message():
 	chatroom_id = request.form.get("chatroom_id")
 	user_id = request.form.get("user_id")
 
-	if msg == None or chatroom_id == None or name == None or user_id == None :
+	if msg == None or chatroom_id == None or chatroom_id == '' or not chatroom_id.isdigit() or name == None or user_id == None :
 		return jsonify(status="ERROR", message="missing parameters")
 	else :
 		insert_query = "INSERT INTO messages (chatroom_id,user_id,name,message,timestamp) VALUES (%s,%s,%s,%s,%s)"
